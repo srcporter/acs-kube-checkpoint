@@ -1,0 +1,32 @@
+
+apply the featuregate CRD
+Administration > CustomResourceDefinitions > FeatureGate > Instances > cluster > YAML and adding following yaml
+
+replace "spec: {}" with the contents of the featuregate-crd.yaml file
+
+apply MachineConfig files, both 05-criu YAMLs
+
+tls.crt and tls.key come from kubeconfig admin user's client-certificate-data and client-key-data
+
+
+
+cat kubeconfig| yq -r '.users[0].user.client-certificate-data' | base64 -d > tls.crt
+cat kubeconfig| yq -r '.users[0].user.client-key-data' | base64 -d > tls.key
+
+from oc debug on node where the pod is running:
+
+first, create a runc.conf
+- mkdir /host/etc/criu
+- echo "tcp-established" > /host/etc/criu/runc.conf
+
+
+curl -v -k --cert ./tls.crt --key ./tls.key -X POST "https://localhost:10250/checkpoint/boutique/adservice-589976ccc8-m7n6j/server"
+
+
+after the checkpoint is created, the tar will be in /host/var/lib/kubelet/checkpoints
+
+need pod name from when you run
+> oc debug node/chris-ocp-02-9mggc-worker-c-vhpxg.c.acs-team-temp-dev.internal
+>  Starting pod/chris-ocp-02-9mggc-worker-c-vhpxgcacs-team-temp-devinternal-debug-cwl6l
+
+oc rsync chris-ocp-02-9mggc-worker-c-vhpxgcacs-team-temp-devinternal-debug-cwl6l:/host/var/lib/kubelet/checkpoints .

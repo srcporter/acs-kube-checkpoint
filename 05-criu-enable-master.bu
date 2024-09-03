@@ -1,0 +1,21 @@
+variant: openshift
+version: 4.14.0
+metadata:
+  name: 05-enable-criu
+  labels:
+    machineconfiguration.openshift.io/role: master
+storage:
+  files:
+  - path: /etc/crio/crio.conf.d/05-enable-criu
+    mode: 0644
+    overwrite: true
+    contents:
+      inline: |
+        [crio.runtime]
+        enable_criu_support = true
+  - path: /etc/criu/runc.conf
+    mode: 0644
+    overwrite: true
+    contents:
+      inline: |
+        tcp-established
